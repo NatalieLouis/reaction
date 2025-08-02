@@ -1,0 +1,36 @@
+# .clang-format - Based on Google style with tweaks
+
+BasedOnStyle: Google
+
+# 通用设置
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ColumnLimit: 100
+ReflowComments: true
+
+# 缩进命名空间
+NamespaceIndentation: All  # 默认是 None，改为 All 表示总是缩进
+
+# 一行函数体允许保留
+AllowShortFunctionsOnASingleLine: Inline  # Google 默认是 Inline
+
+# 指针/引用对齐方式（Google 风格为左）
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+# 控制表达式括号等风格
+SpaceBeforeParens: ControlStatements
+BreakConstructorInitializers: BeforeComma
+
+# include 排序
+IncludeBlocks: Regroup
+SortIncludes: true
+
+# C++11/20相关支持（保持合理设置）
+Cpp11BracedListStyle: true
+SpacesInAngles: false
+SpaceAfterCStyleCast: true
+
+# 对齐访问控制符（如 public/private）
+AlignAfterOpenBracket: Align
