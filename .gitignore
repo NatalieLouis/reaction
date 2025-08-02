@@ -1,0 +1,21 @@
+# === Build Artifacts ===
+build/
+*.o
+*.a
+*.so
+*.exe
+*.out
+
+# === CMake ===
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# === GTest Cache ===
+Testing/
+test/*.log
+CTestTestfile.cmake
+
+# === VSCode ===
+.vscode/
