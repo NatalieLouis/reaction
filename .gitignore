@@ -19,3 +19,4 @@ CTestTestfile.cmake
 
 # === VSCode ===
 .vscode/
+.cache
