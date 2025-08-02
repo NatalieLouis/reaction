@@ -1,5 +1,6 @@
 #include <exception>
 #include <memory>
+#include <stdexcept>
 
 namespace reaction {
   template <typename Type>
@@ -21,7 +22,14 @@ namespace reaction {
       }
       return *m_ptr;
     }
-    void updateValue() {}
+
+    template <typename T>
+    void updateValue(T&& t) {
+      if (!m_ptr) {
+        m_ptr = std::make_unique<Type>(std::forward<T>(t));
+      }
+      *m_ptr = std::forward<T>(t);
+    }
 
    private:
     std::unique_ptr<Type> m_ptr;
