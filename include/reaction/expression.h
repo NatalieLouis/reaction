@@ -7,7 +7,10 @@
 
 namespace reaction {
   template <typename T, typename... Args>
-  class DataSource;
+  class ReactImpl;
+
+  template <typename T>
+  class React;
 
   struct VarExpressionTag {};
   struct CalcExpressionTag {};
@@ -18,18 +21,18 @@ namespace reaction {
   };
 
   template <typename T>
-  struct ExpressionTraits<DataSource<T>> {
+  struct ExpressionTraits<React<ReactImpl<T>>> {
     using Type = T;
   };
 
   template <typename Fun, typename... Args>
-  struct ExpressionTraits<DataSource<Fun, Args...>> {
+  struct ExpressionTraits<React<ReactImpl<Fun, Args...>>> {
     using Type = std::invoke_result_t<Fun, typename ExpressionTraits<Args>::Type...>;
   };
 
   template <typename Fun, typename... Args>
   using ExpressionType =
-      typename ExpressionTraits<DataSource<Fun, Args...>>::Type;  // 避免typename来避免歧义
+      typename ExpressionTraits<React<ReactImpl<Fun, Args...>>>::Type;  // 避免typename来避免歧义
 
   template <typename Fun, typename... Args>
   class Expression : public Resource<ExpressionType<Fun, Args...>> {

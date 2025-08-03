@@ -1,10 +1,12 @@
 #pragma once
 
+#include <memory>
+#include <unordered_set>
 #include <vector>
 
 #include "concept.h"
 namespace reaction {
-  class ObserverNode {
+  class ObserverNode : public std::enable_shared_from_this<ObserverNode> {
    public:
     virtual ~ObserverNode() = default;
     virtual void valueChanged() {};
@@ -13,7 +15,7 @@ namespace reaction {
 
     template <typename... Args>
     void updateObservers(Args&&... args) {
-      (void) (..., args.addObserver(this));
+      (void) (..., args.getSharedPtr()->addObserver(this));
     }
 
     void notify() {
@@ -24,5 +26,21 @@ namespace reaction {
 
    private:
     std::vector<ObserverNode*> m_observers;
+  };
+
+  using NodePtr = std::shared_ptr<ObserverNode>;
+  class ObserverGraph {
+   public:
+    static ObserverGraph& instance() {
+      static ObserverGraph instance;
+      return instance;
+    }
+    void addNode(NodePtr node) { m_nodes.insert(std::move(node)); }
+
+    void removeNode(const NodePtr& node) { m_nodes.erase(node); }
+
+   private:
+    ObserverGraph() = default;
+    std::unordered_set<NodePtr> m_nodes;
   };
 }  // namespace reaction
