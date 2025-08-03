@@ -6,33 +6,8 @@
 #include "resource.h"
 
 namespace reaction {
-  template <typename T, typename... Args>
-  class ReactImpl;
-
-  template <typename T>
-  class React;
-
   struct VarExpressionTag {};
   struct CalcExpressionTag {};
-
-  template <typename T>
-  struct ExpressionTraits {
-    using Type = T;
-  };
-
-  template <typename T>
-  struct ExpressionTraits<React<ReactImpl<T>>> {
-    using Type = T;
-  };
-
-  template <typename Fun, typename... Args>
-  struct ExpressionTraits<React<ReactImpl<Fun, Args...>>> {
-    using Type = std::invoke_result_t<Fun, typename ExpressionTraits<Args>::Type...>;
-  };
-
-  template <typename Fun, typename... Args>
-  using ExpressionType =
-      typename ExpressionTraits<React<ReactImpl<Fun, Args...>>>::Type;  // 避免typename来避免歧义
 
   template <typename Fun, typename... Args>
   class Expression : public Resource<ExpressionType<Fun, Args...>> {
