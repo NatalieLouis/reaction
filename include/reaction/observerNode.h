@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+
+#include "concept.h"
 namespace reaction {
   class ObserverNode {
    public:

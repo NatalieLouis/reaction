@@ -3,7 +3,6 @@
 #include <stdexcept>
 
 #include "observerNode.h"
-
 namespace reaction {
   template <typename Type>
   class Resource : public ObserverNode {

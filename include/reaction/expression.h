@@ -9,6 +9,9 @@ namespace reaction {
   template <typename T, typename... Args>
   class DataSource;
 
+  struct VarExpressionTag {};
+  struct CalcExpressionTag {};
+
   template <typename T>
   struct ExpressionTraits {
     using Type = T;
@@ -31,6 +34,9 @@ namespace reaction {
   template <typename Fun, typename... Args>
   class Expression : public Resource<ExpressionType<Fun, Args...>> {
    public:
+    using ExprType = CalcExpressionTag;
+    using ValueType = ExpressionType<Fun, Args...>;
+
     template <typename F, typename... A>
     Expression(F&& fun, A&&... args)
         : Resource<ExpressionType<Fun, Args...>>()
@@ -63,6 +69,8 @@ namespace reaction {
   template <typename Type>
   class Expression<Type> : public Resource<Type> {
    public:
+    using ExprType = VarExpressionTag;
+    using ValueType = Type;
     using Resource<Type>::Resource;
   };
 }  // namespace reaction
