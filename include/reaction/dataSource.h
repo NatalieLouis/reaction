@@ -4,11 +4,18 @@
 #include "expression.h"
 
 namespace reaction {
-  template <typename T, typename... Args>
-  class DataSource : public Expression<T, Args...> {
+  template <typename Type, typename... Args>
+  class DataSource : public Expression<Type, Args...> {
    public:
-    using Expression<T, Args...>::Expression;
+    using Expression<Type, Args...>::Expression;
+
     auto get() const { return this->getValue(); }
+
+    template <typename T>
+    void value(T&& t) {
+      this->updateValue(std::forward<T>(t));
+      this->notify();
+    }
   };
 
   template <typename T>

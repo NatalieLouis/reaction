@@ -2,9 +2,11 @@
 #include <memory>
 #include <stdexcept>
 
+#include "observerNode.h"
+
 namespace reaction {
   template <typename Type>
-  class Resource {
+  class Resource : public ObserverNode {
    public:
     Resource() : m_ptr(nullptr) {}
 

@@ -4,7 +4,7 @@
 
 #include "reaction/dataSource.h"
 
-TEST(ReactionTest, TestCalc) {
+TEST(ReactionTest, TestCommonUse) {
   auto a = reaction::var(1);
   auto b = reaction::var(3.14);
   EXPECT_EQ(a.get(), 1);
@@ -16,7 +16,11 @@ TEST(ReactionTest, TestCalc) {
 
   ASSERT_FLOAT_EQ(ds.get(), 4.14);
   EXPECT_EQ(dds.get(), "14.140000");
+  a.value(2);
+  ASSERT_FLOAT_EQ(ds.get(), 5.14);
+  EXPECT_EQ(dds.get(), "25.140000");
 }
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

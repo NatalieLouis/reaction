@@ -36,10 +36,16 @@ namespace reaction {
         : Resource<ExpressionType<Fun, Args...>>()
         , m_fun(std::forward<F>(fun))
         , m_args(std::forward<A>(args)...) {
+      this->updateObservers(std::forward<A>(args)...);
       evaluate();
     }
 
    private:
+    void valueChanged() override {
+      evaluate();
+      this->notify();
+    }
+
     void evaluate() {
       auto result =
           [&]<std::size_t... I>(std::index_sequence<I...>) {
