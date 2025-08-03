@@ -31,12 +31,18 @@ namespace reaction {
     }
 
     void evaluate() {
-      auto result =
-          [&]<std::size_t... I>(std::index_sequence<I...>) {
-            return std::invoke(m_fun, std::get<I>(m_args).get().get()...);
-          }(std::make_index_sequence<std::tuple_size_v<
-                decltype(m_args)>>{});  //{}构造一个临时对象,因为需要std::index_sequence类型
-      this->updateValue(result);
+      if constexpr (VoidType<ValueType>) {
+        [&]<std::size_t... I>(std::index_sequence<I...>) {
+          return std::invoke(m_fun, std::get<I>(m_args).get().get()...);
+        }(std::make_index_sequence<std::tuple_size_v<decltype(m_args)>>{});
+      } else {
+        auto result =
+            [&]<std::size_t... I>(std::index_sequence<I...>) {
+              return std::invoke(m_fun, std::get<I>(m_args).get().get()...);
+            }(std::make_index_sequence<std::tuple_size_v<
+                  decltype(m_args)>>{});  //{}构造一个临时对象,因为需要std::index_sequence类型
+        this->updateValue(result);
+      }
     }
 
    private:

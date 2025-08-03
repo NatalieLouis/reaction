@@ -17,7 +17,7 @@ namespace reaction {
     auto get() const { return this->getValue(); }
 
     template <typename T>
-      requires ConvertCC<T, ValueType> && VarExprCC<VarExpressionTag>
+      requires(ConvertCC<T, ValueType> && VarExprCC<VarExpressionTag> && !ConstType<ValueType>)
     void value(T&& t) {
       this->updateValue(std::forward<T>(t));
       this->notify();
@@ -80,7 +80,11 @@ namespace reaction {
 
     explicit operator bool() const { return !m_weakPtr.expired(); }
 
-    auto get() const { return getSharedPtr()->get(); }
+    auto get() const
+      requires IsDataReact<ReactType>
+    {
+      return getSharedPtr()->get();
+    }
 
     template <typename T>
     void value(T&& t) {
@@ -106,12 +110,24 @@ namespace reaction {
     return React(ptr);
   }
 
+  template <typename T>
+  auto constVar(T&& t) {
+    auto ptr = std::make_shared<ReactImpl<const std::decay_t<T>>>(std::forward<T>(t));
+    ObserverGraph::instance().addNode(ptr);
+    return React(ptr);
+  }
+
   template <typename Func, typename... Args>
   auto calc(Func&& fun, Args&&... args) {
     auto ptr = std::make_shared<ReactImpl<std::decay_t<Func>, std::decay_t<Args>...>>(
         std::forward<Func>(fun), std::forward<Args>(args)...);
     ObserverGraph::instance().addNode(ptr);
     return React(ptr);
+  }
+
+  template <typename Func, typename... Args>
+  auto action(Func&& fun, Args&&... args) {
+    return calc(std::forward<Func>(fun), std::forward<Args>(args)...);
   }
 
 }  // namespace reaction

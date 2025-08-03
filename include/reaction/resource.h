@@ -36,4 +36,9 @@ namespace reaction {
     std::unique_ptr<Type> m_ptr;
   };
 
+  template <>
+  class Resource<void> : public ObserverNode {
+   public:
+  };
+
 }  // namespace reaction
