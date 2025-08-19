@@ -31,3 +31,4 @@ code --install-extension GitHub.copilot-1.350.0.vsix
 ```
 code --list-extensions | grep copilot
 ```
+# Gtest +CMake
