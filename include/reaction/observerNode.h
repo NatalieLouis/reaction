@@ -25,7 +25,7 @@ namespace reaction {
     }
 
    private:
-    std::vector<ObserverNode*> m_observers;
+    std::vector<ObserverNode*> m_observers;  // 这里为啥用裸指针呢
   };
 
   using NodePtr = std::shared_ptr<ObserverNode>;
