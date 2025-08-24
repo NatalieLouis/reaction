@@ -86,7 +86,7 @@ namespace reaction {
     auto get() const
       requires IsDataReact<ReactType>
     {
-      return getSharedPtr()->get();  // Impl的get 获取resource的值
+      return getSharedPtr()->get();  // Impl的get 获取resource的值,需要是有值的才能有get
     }
     // 更新值
     template <typename T>

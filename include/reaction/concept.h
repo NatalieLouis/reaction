@@ -35,7 +35,7 @@ namespace reaction {
 
   template <typename T>
   concept IsDataReact = requires(T t) {
-    typename T::ValueType;
+    typename T::ValueType;  // 要求T类型中有ValueType别名
     requires(IsReactNode<T> && !VoidType<typename T::ValueType>);
   };
 

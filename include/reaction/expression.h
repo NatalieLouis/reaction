@@ -29,9 +29,10 @@ namespace reaction {
       evaluate();
       this->notify();  // 通知观察者更新
     }
-
+    // 实现观察者的更新策略
     void evaluate() {
       if constexpr (VoidType<ValueType>) {
+        // action 没有返回值
         [&]<std::size_t... I>(std::index_sequence<I...>) {
           return std::invoke(m_fun, std::get<I>(m_args).get().get()...);
         }(std::make_index_sequence<std::tuple_size_v<decltype(m_args)>>{});

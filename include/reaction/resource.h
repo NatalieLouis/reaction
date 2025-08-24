@@ -39,6 +39,7 @@ namespace reaction {
   template <>
   class Resource<void> : public ObserverNode {
    public:
+    // void 是无需创建unique_ptr
   };
 
 }  // namespace reaction
