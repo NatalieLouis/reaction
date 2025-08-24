@@ -15,7 +15,12 @@ namespace reaction {
     using ExprType = typename Expression<Type, Args...>::ExprType;
     using ValueType = typename Expression<Type, Args...>::ValueType;
 
-    auto get() const { return this->getValue(); }
+    decltype(auto) get() const { return this->getValue(); }
+
+    template <typename T>
+    void operator=(T&& t) {
+      value(std::forward<T>(t));
+    }
 
     template <typename T>
       requires(ConvertCC<T, ValueType> && VarExprCC<VarExpressionTag> && !ConstType<ValueType>)
@@ -29,6 +34,9 @@ namespace reaction {
       if (--m_weakRefCount == 0) {
         ObserverGraph::instance().removeNode(
             this->shared_from_this());  // 引用计数为0时，从观察图中移除节点
+        if constexpr (HasField<ValueType>) {
+          FieldGraph::instance().removeField(this->getValue().getID());
+        }
       }
     }
 
@@ -81,9 +89,11 @@ namespace reaction {
       return *this;
     }
 
+    ReactType& operator*() const { return *getSharedPtr(); }
+
     explicit operator bool() const { return !m_weakPtr.expired(); }
 
-    auto get() const
+    decltype(auto) get() const
       requires IsDataReact<ReactType>
     {
       return getSharedPtr()->get();  // Impl的get 获取resource的值,需要是有值的才能有get
@@ -107,8 +117,29 @@ namespace reaction {
   };
 
   template <typename T>
+  using Field = React<ReactImpl<std::decay_t<T>>>;
+
+  class FieldBase {
+   public:
+    template <typename T>
+    auto field(T&& t) {
+      auto ptr = std::make_shared<ReactImpl<std::decay_t<T>>>(std::forward<T>(t));
+      FieldGraph::instance().addField(m_id, ptr->shared_from_this());  // 转换为基类的指针
+      return React(ptr);
+    }
+    uint64_t getID() const { return m_id; }
+
+   private:
+    UniqueID m_id;
+  };
+
+  template <typename T>
   auto var(T&& t) {
     auto ptr = std::make_shared<ReactImpl<std::decay_t<T>>>(std::forward<T>(t));
+
+    if constexpr (HasField<T>) {
+      FieldGraph::instance().bindFeild(t.getID(), ptr->shared_from_this());
+    }
     ObserverGraph::instance().addNode(ptr);  // 将节点加入观察图
     return React(ptr);
   }

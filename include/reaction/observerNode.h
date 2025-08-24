@@ -5,11 +5,14 @@
 #include <vector>
 
 #include "concept.h"
+#include "utility.h"
 namespace reaction {
   class ObserverNode : public std::enable_shared_from_this<ObserverNode> {
    public:
     virtual ~ObserverNode() = default;
-    virtual void valueChanged() {};
+    virtual void valueChanged() {
+      this->notify();  // 默认的更新策略是通知所有观察者
+    };
 
     void addObserver(ObserverNode* observer) { m_observers.emplace_back(observer); }
     // 订阅主题
@@ -43,5 +46,27 @@ namespace reaction {
    private:
     ObserverGraph() = default;
     std::unordered_set<NodePtr> m_nodes;
+  };
+
+  class FieldGraph {
+   public:
+    static FieldGraph& instance() {
+      static FieldGraph instance;
+      return instance;
+    }
+    void addField(const uint64_t& id, const NodePtr& node) { m_fieldMap[id].insert(node); }
+    void removeField(const uint64_t& id) { m_fieldMap.erase(id); }
+    void bindFeild(const uint64_t& id, NodePtr objPtr) {
+      if (m_fieldMap.find(id) != m_fieldMap.end()) {
+        for (const auto& node : m_fieldMap[id]) {
+          node->addObserver(objPtr.get());  // 添加裸指针
+        }
+      }
+    }
+
+   private:
+    FieldGraph() = default;
+    std::unordered_map<uint64_t, std::unordered_set<NodePtr>>
+        m_fieldMap;  // 之前不是uint64_t测试不过
   };
 }  // namespace reaction

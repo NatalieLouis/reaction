@@ -1,3 +1,5 @@
+#include <sys/types.h>
+
 #include <concepts>
 #include <memory>
 #include <type_traits>
@@ -13,6 +15,7 @@ namespace reaction {
 
   struct VarExpressionTag;
   class ObserverNode;
+  class FieldBase;
   using NodePtr = std::shared_ptr<ObserverNode>;
 
   //==================================concepts=========================================
@@ -37,6 +40,12 @@ namespace reaction {
   concept IsDataReact = requires(T t) {
     typename T::ValueType;  // 要求T类型中有ValueType别名
     requires(IsReactNode<T> && !VoidType<typename T::ValueType>);
+  };
+
+  template <typename T>
+  concept HasField = requires(T t) {
+    { t.getID() } -> std::same_as<uint64_t>;
+    requires std::is_base_of_v<FieldBase, std::decay_t<T>>;
   };
 
   //=====================expression traits=================================

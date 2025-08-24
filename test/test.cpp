@@ -57,6 +57,34 @@ TEST(ReactionTest, TestAction) {
   a.value(2);
 }
 
+class Person : public reaction::FieldBase {
+ public:
+  Person(std::string name, int age, bool male)
+      : m_name(field(name)), m_age(field(age)), m_male(male) {}
+
+  std::string getName() const { return m_name.get(); }
+  void setName(const std::string& name) { *m_name = name; }
+
+  int getAge() const { return m_age.get(); }
+  void setAge(int age) { *m_age = age; }
+
+ private:
+  reaction::Field<std::string> m_name;
+  reaction::Field<int> m_age;
+  bool m_male;
+};
+
+TEST(BasicTest, FieldTest) {
+  Person person{"lummy", 18, true};
+  auto p = reaction::var(person);
+  auto a = reaction::var(1);
+  auto ds = reaction::calc([](int aa, auto pp) { return std::to_string(aa) + pp.getName(); }, a, p);
+
+  EXPECT_EQ(ds.get(), "1lummy");
+  p.get().setName("lummy-new");
+  EXPECT_EQ(ds.get(), "1lummy-new");
+}
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
