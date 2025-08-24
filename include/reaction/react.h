@@ -124,8 +124,9 @@ namespace reaction {
     template <typename T>
     auto field(T&& t) {
       auto ptr = std::make_shared<ReactImpl<std::decay_t<T>>>(std::forward<T>(t));
-      FieldGraph::instance().addField(m_id, ptr->shared_from_this());  // 转换为基类的指针
-      return React(ptr);
+      // 将类中的所有field加入FieldGraph
+      FieldGraph::instance().addField(m_id, ptr->shared_from_this());  // 转换为基类的智能指针
+      return React(ptr);                                               // field成员变量
     }
     uint64_t getID() const { return m_id; }
 
@@ -138,7 +139,7 @@ namespace reaction {
     auto ptr = std::make_shared<ReactImpl<std::decay_t<T>>>(std::forward<T>(t));
 
     if constexpr (HasField<T>) {
-      FieldGraph::instance().bindFeild(t.getID(), ptr->shared_from_this());
+      FieldGraph::instance().bindFeild(t.getID(), ptr->shared_from_this());  // 添加观察者
     }
     ObserverGraph::instance().addNode(ptr);  // 将节点加入观察图
     return React(ptr);

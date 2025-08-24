@@ -69,14 +69,14 @@ class Person : public reaction::FieldBase {
   void setAge(int age) { *m_age = age; }
 
  private:
-  reaction::Field<std::string> m_name;
+  reaction::Field<std::string> m_name;  // react对象
   reaction::Field<int> m_age;
   bool m_male;
 };
 
 TEST(BasicTest, FieldTest) {
   Person person{"lummy", 18, true};
-  auto p = reaction::var(person);
+  auto p = reaction::var(person);  // is_base_of
   auto a = reaction::var(1);
   auto ds = reaction::calc([](int aa, auto pp) { return std::to_string(aa) + pp.getName(); }, a, p);
 

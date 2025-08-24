@@ -66,7 +66,7 @@ namespace reaction {
 
    private:
     FieldGraph() = default;
-    std::unordered_map<uint64_t, std::unordered_set<NodePtr>>
-        m_fieldMap;  // 之前不是uint64_t测试不过
+    std::unordered_map<uint64_t, std::unordered_set<NodePtr>>  // 要求是智能指针
+        m_fieldMap;                                            // 之前不是uint64_t测试不过
   };
 }  // namespace reaction

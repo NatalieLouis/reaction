@@ -26,7 +26,7 @@ namespace reaction {
 
    private:
     void valueChanged() override {
-      evaluate();
+      evaluate();      // 计算当前值
       this->notify();  // 通知观察者更新
     }
     // 实现观察者的更新策略
