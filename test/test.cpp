@@ -51,7 +51,8 @@ TEST(ReactionTest, TestAction) {
   auto a = reaction::var(1);
   auto b = reaction::var(3.14);
   auto at = reaction::action(
-      [](int aa, double bb) { std::cout << "a = " << aa << '\t' << "b = " << bb << '\t'; }, a, b);
+      [](int aa, double bb) { std::cout << "a = " << aa << '\t' << "b = " << bb << '\t'; }, a,
+      b);  // void类型
 
   a.value(2);
 }

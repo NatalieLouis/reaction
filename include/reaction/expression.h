@@ -20,14 +20,14 @@ namespace reaction {
         : Resource<ExpressionType<Fun, Args...>>()
         , m_fun(std::forward<F>(fun))
         , m_args(std::forward<A>(args)...) {
-      this->updateObservers(std::forward<A>(args)...);
-      evaluate();
+      this->updateObservers(std::forward<A>(args)...);  // auto c = alc(functor, a, b); c订阅a,b
+      evaluate();                                       // 计算当前值
     }
 
    private:
     void valueChanged() override {
       evaluate();
-      this->notify();
+      this->notify();  // 通知观察者更新
     }
 
     void evaluate() {
@@ -36,9 +36,10 @@ namespace reaction {
           return std::invoke(m_fun, std::get<I>(m_args).get().get()...);
         }(std::make_index_sequence<std::tuple_size_v<decltype(m_args)>>{});
       } else {
+        // lambda函数直接调用
         auto result =
             [&]<std::size_t... I>(std::index_sequence<I...>) {
-              return std::invoke(m_fun, std::get<I>(m_args).get().get()...);
+              return std::invoke(m_fun, std::get<I>(m_args).get().get()...);  // get()*2???
             }(std::make_index_sequence<std::tuple_size_v<
                   decltype(m_args)>>{});  //{}构造一个临时对象,因为需要std::index_sequence类型
         this->updateValue(result);

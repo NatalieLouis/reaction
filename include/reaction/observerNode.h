@@ -12,15 +12,16 @@ namespace reaction {
     virtual void valueChanged() {};
 
     void addObserver(ObserverNode* observer) { m_observers.emplace_back(observer); }
-
+    // 订阅主题
     template <typename... Args>
     void updateObservers(Args&&... args) {
-      (void) (..., args.getSharedPtr()->addObserver(this));
+      (void) (...,
+              args.getSharedPtr()->addObserver(this));  // 弃值表达式&折叠表达式,React的getSharedPtr
     }
 
     void notify() {
       for (auto& observer : m_observers) {
-        observer->valueChanged();
+        observer->valueChanged();  // 调用观察者的更新策略
       }
     }
 

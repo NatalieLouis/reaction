@@ -10,23 +10,25 @@ namespace reaction {
   template <typename Type, typename... Args>
   class ReactImpl : public Expression<Type, Args...> {
    public:
+    using Expression<Type, Args...>::Expression;  // 调用基类构造函数
+
     using ExprType = typename Expression<Type, Args...>::ExprType;
     using ValueType = typename Expression<Type, Args...>::ValueType;
-    using Expression<Type, Args...>::Expression;
 
     auto get() const { return this->getValue(); }
 
     template <typename T>
       requires(ConvertCC<T, ValueType> && VarExprCC<VarExpressionTag> && !ConstType<ValueType>)
     void value(T&& t) {
-      this->updateValue(std::forward<T>(t));
+      this->updateValue(std::forward<T>(t));  // 要求类型可转换，且不是const类型,且是var类型
       this->notify();
     }
-    void addWeakRef() { ++m_weakRefCount; }
+    void addWeakRef() { ++m_weakRefCount; }  // 引用计数增加
 
     void removeWeakRef() {
       if (--m_weakRefCount == 0) {
-        ObserverGraph::instance().removeNode(this->shared_from_this());
+        ObserverGraph::instance().removeNode(
+            this->shared_from_this());  // 引用计数为0时，从观察图中移除节点
       }
     }
 
@@ -37,6 +39,7 @@ namespace reaction {
   template <typename ReactType>
   class React {
    public:
+    // ReactImpl<std::decay_t<T>> == ReactType
     explicit React(std::shared_ptr<ReactType> ptr) : m_weakPtr(std::move(ptr)) {
       if (auto sharedPtr = m_weakPtr.lock()) {
         sharedPtr->addWeakRef();
@@ -83,9 +86,9 @@ namespace reaction {
     auto get() const
       requires IsDataReact<ReactType>
     {
-      return getSharedPtr()->get();
+      return getSharedPtr()->get();  // Impl的get 获取resource的值
     }
-
+    // 更新值
     template <typename T>
     void value(T&& t) {
       getSharedPtr()->value(std::forward<T>(t));
@@ -106,7 +109,7 @@ namespace reaction {
   template <typename T>
   auto var(T&& t) {
     auto ptr = std::make_shared<ReactImpl<std::decay_t<T>>>(std::forward<T>(t));
-    ObserverGraph::instance().addNode(ptr);
+    ObserverGraph::instance().addNode(ptr);  // 将节点加入观察图
     return React(ptr);
   }
 

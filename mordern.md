@@ -235,7 +235,29 @@ enum InternalState { Init, Running, Done };  // 仅实现可见
 编译 main.cpp 时：编译器只看到 MyTemplate<int>::func() 的声明，没有实现，无法生成该函数的具体代码（只知道 “有这个函数”，但不知道 “怎么实现”）；编译 my_template.cpp 时：编译器看到了实现，但由于没有 “显式告诉它需要实例化 MyTemplate<int>”，它不会主动生成 MyTemplate<int> 的代码（模板不会为 “所有可能的类型” 提前生成代码，那样太浪费）；链接阶段：main.obj 中引用了 MyTemplate<int>::func()，但所有目标文件中都没有这个函数的实现（没生成），导致 链接错误（undefined reference）。
 如果确实想把模板实现放在 .cpp 中（比如隐藏实现细节），可以用显式实例化：在模板实现的 .cpp 中，主动告诉编译器 “需要为哪些类型生成代码”。
 
+## 类型擦除
+### 基类指针
+### function
+std::function：可存储函数、lambda、函数对象等，只要签名匹配（如 std::function<void(int)> 可存储任何 “接收 int、返回 void” 的可调用对象
+### 静态擦除
+基于模板的静态擦除（编译期擦除）
+通过模板重载或特化，在编译期为不同类型生成适配代码，对外暴露统一接口（无需运行时多态）。例如标准库的 std::for_each 就是通过模板擦除容器的具体类型，只要容器支持迭代器即可。
+
 
 C++ 的编译模型是 “单文件独立编译”，每个编译单元看不到其他单元的代码；
 模板的实例化发生在编译期，且需要完整实现才能生成具体类型的代码；
 若实现放在 .cpp 中，使用模板的编译单元在编译时看不到实现，无法实例化；而实现所在的 .cpp 也不会主动生成所有可能的实例，最终导致链接失败。
+
+## 常见
+## std::decay_t
+## std::reference_wrapper
+## std::invoke
+C++17 引入的通用调用工具，可统一调用普通函数、成员函数、函数对象、lambda 等任何可调用对象（m_fun）。
+## std::tuple
+## std::remove_reference_t
+## std::is_void_v
+## std::invoke_result_t
+## 类型别名
+
+# 模板
+立即调用的模板 lambda 表达式（IIFE，Immediately Invoked Function Expression）

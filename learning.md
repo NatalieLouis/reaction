@@ -152,3 +152,85 @@ auto 用于变量声明时，必须有初始化表达式，编译器才能推断
 在 C++ 中，非静态成员变量也不能直接使用 auto 声明。
 
 C++ 标准明确规定：类的非静态成员变量声明时，不能使用 auto 作为类型说明符，因为编译器无法在类定义阶段推断非静态成员的具体类型（非静态成员的初始化通常在构造函数中，而类定义时构造函数尚未执行）。
+
+## weak_ptr
+
+无论是拷贝还是移动构造，weak_ptr 都不会影响它所观察对象的引用计数
+移动构造后，源 weak_ptr 变得无效（expired() 会返回 true）
+拷贝构造后，两个 weak_ptr 相互独立，一个的重置不会影响另一个
+
+## auto
+模板函数的返回值是auto
+
+## using
+
+### 重用构造函数
+```
+// 基类
+template <typename T, typename... Args>
+struct Base {
+    Base(int a) {}
+    Base(double b, Args... args) {}
+};
+
+// 派生类：不使用using的写法
+template <typename T, typename... Args>
+struct Derived1 : Base<T, Args...> {
+    // 必须手动转发每个构造函数
+    Derived1(int a) : Base<T, Args...>(a) {}
+    Derived1(double b, Args... args) : Base<T, Args...>(b, args...) {}
+};
+
+// 派生类：使用using的写法（更简洁）
+template <typename T, typename... Args>
+struct Derived2 : Base<T, Args...> {
+    // 一次性继承基类所有构造函数
+    using Base<T, Args...>::Base;
+};
+
+```
+简化代码，避免重复定义
+如果派生类需要继承基类的全部或部分构造函数，无需在派生类中手动编写构造函数并显式调用基类构造函数（如 Derived(...) : Base(...) {}），直接通过 using 声明即可继承，减少冗余代码。
+保持接口一致性
+当基类有多个构造函数时（如不同参数列表的重载），using 声明会一次性继承基类所有构造函数，确保派生类与基类的构造接口保持一致，避免遗漏某些构造方式。
+支持参数转发
+继承的基类构造函数会自动适配派生类的初始化需求，无需手动处理参数转发逻辑，尤其适合模板类或参数复杂的场景。
+与派生类成员兼容
+继承的基类构造函数会先初始化基类部分，再初始化派生类自己的成员变量（如果有），符合正常的对象构造顺序。
+### 模板元
+与模板元编程结合，定义条件类型
+通过 std::conditional 等元函数，结合别名可定义 “条件类型”。
+```
+#include <type_traits>
+
+// 根据T是否为整数，定义不同的类型
+template <typename T>
+using NumericType = std::conditional_t<
+    std::is_integral_v<T>,
+    long long,  // 若T是整数，用long long
+    double      // 否则用double
+>;
+
+NumericType<int> a;    // 实际类型：long long
+NumericType<float> b;  // 实际类型：double
+```
+
+```
+template <typename T>
+  struct ExpressionTraits {
+    using Type = T;
+  };
+
+  template <typename T>
+  struct ExpressionTraits<React<ReactImpl<T>>> {
+    using Type = T;
+  };
+```
+这种技术常用于泛型编程中处理类型包装的场景，例如：
+
+- 剥离类型包装：当代码中存在多层封装的类型（如 React<ReactImpl<T>>），但实际需要操作的是内层的 T 时，用这种方式可以自动 “解包”。
+- 统一接口适配：无论输入类型是原始类型还是包装类型，都能通过 ExpressionTraits<T>::Type 获得一致的底层类型，简化后续逻辑。
+- 类型转换的钩子：可以根据需要添加更多特化版本，例如针对 React<OtherImpl<T>> 或 Wrapper<T> 等其他包装类型，定制不同的底层类型提取规则。
+
+
+总结来说，这是 C++ 模板元编程中一种常见的 “类型萃取” 技巧，通过 using 定义的类型别名作为 “出口”，配合模板特化实现对不同类型的差异化处理，最终目的是从复杂类型中提取出需要的底层类型

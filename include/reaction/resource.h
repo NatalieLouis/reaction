@@ -15,7 +15,7 @@ namespace reaction {
     Resource& operator=(const Resource&) = delete;
 
     Resource(Resource&&) = default;
-    Resource& operator=(Resource&&) = default;
+    Resource& operator=(Resource&&) = default;  // 禁止拷贝，允许移动
 
     Type& getValue() const {
       if (!m_ptr) {
