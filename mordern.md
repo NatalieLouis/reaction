@@ -253,6 +253,37 @@ C++ 的编译模型是 “单文件独立编译”，每个编译单元看不到
 ## std::reference_wrapper
 ## std::invoke
 C++17 引入的通用调用工具，可统一调用普通函数、成员函数、函数对象、lambda 等任何可调用对象（m_fun）。
+自动适配调用语法：
+
+    调用普通函数：直接传参（如 invoke(f, a, b) 等价于 f(a, b)）。
+    调用成员函数：第一个参数必须是对象（或指针 / 引用），如 invoke(&T::method, obj, a) 等价于 obj.method(a)。
+    调用函数对象：直接传参（如 invoke(functor, a) 等价于 functor(a)）。
+## std::apply
+关键特点：
+
+    必须接收一个可调用对象和一个元组：元组中的元素会被逐个展开为函数的参数。
+    本质是参数解包工具：解决 “元组元素无法直接作为函数参数传递” 的问题（元组元素需要编译期索引访问）。
+
+```
+#include <tuple>
+#include <iostream>
+
+int add(int a, double b, const std::string& c) {
+    return a + b + c.size();
+}
+
+int main() {
+    // 创建包含3个元素的元组（参数列表）
+    auto args = std::make_tuple(10, 3.14, std::string("abc"));
+
+    // 用std::apply解包元组，调用add函数
+    int result = std::apply(add, args); 
+    // 等价于 add(10, 3.14, "abc") → 10 + 3.14 + 3 = 16.14（返回int为16）
+
+    std::cout << result << std::endl; // 输出 16
+    return 0;
+}
+```
 ## std::tuple
 ## std::remove_reference_t
 ## std::is_void_v

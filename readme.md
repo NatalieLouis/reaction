@@ -5,6 +5,10 @@
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug -S . -B build
 cmake --build build -j 编译 build/ 目录中的构建系统，实质上等同于进入该目录后执行 make -j 或 ninja -j
 则会在build目录下生成complie_commands.json文件,实现C++代码提示和跳转
+
+cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=20 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+## 将生成的compile_commands.json软链接到项目根目录
+ln -s build/compile_commands.json .
 # 格式化
 ```
 wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -

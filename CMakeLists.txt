@@ -34,6 +34,13 @@ target_include_directories(${PROJECT_NAME} INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+file(GLOB EXAMPLE_SOURCES ${PROJECT_SOURCE_DIR}/example/*.cc)
+foreach(source_file ${EXAMPLE_SOURCES})
+    get_filename_component(example_name ${source_file} NAME_WE)
+    add_executable(${example_name} ${source_file})
+    target_link_libraries(${example_name} PRIVATE ${PROJECT_NAME})
+endforeach()
+
 enable_testing()
 file(GLOB TEST_SOURCES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 add_executable(runTests ${TEST_SOURCES})
