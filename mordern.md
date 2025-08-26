@@ -289,6 +289,85 @@ int main() {
 ## std::is_void_v
 ## std::invoke_result_t
 ## 类型别名
+## inline static
+C++17 引入了 inline static 语法，允许在类内直接定义并初始化静态成员变量，无需类外定义，同时避免重复定义问题。
+inline static constexpr int MAX_SIZE = 1024; //// 编译期确定的静态常量
+```单例模式
+class Singleton {
+public:
+    // 禁止拷贝和移动
+    Singleton(const Singleton&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+
+    // 静态方法获取实例
+    static Singleton& getInstance() {
+        inline static Singleton instance; // 类内定义静态实例
+        return instance;
+    }
+
+private:
+    Singleton() = default; // 私有构造
+};
+
+```
+## consteval
+C++20 支持
+要求必须是一个编译期常量
+
+    constexpr：「可以在编译期计算」的变量 / 函数（也允许运行期计算，是 “可选编译期”）。
+    consteval：「必须在编译期计算」的函数（强制编译期，否则报错，是 “强制编译期”）。
+consteval 是 C++20 引入的关键字，仅用于函数（不能用于变量），核心特点是 “强制编译期计算”—— 函数的所有调用必须在编译期完成，若无法满足（如依赖运行期变量），编译器直接报错。
+
+## constexpr
+其核心特点是 “编译期计算可选”—— 只要满足条件，编译器会优先在编译期计算；若不满足（如依赖运行期变量），则退化为运行期计算（函数 / 变量仍合法）。
+行为类似 const，但比 const 更严格（const 变量可能由运行期值初始化，而 constexpr 变量必须编译期确定）。
+
+```
+#include <iostream>
+
+int main() {
+    // 合法：3是编译期常量，constexpr变量在编译期确定值
+    constexpr int a = 3; 
+    // 合法：a是constexpr（编译期常量），a*2也是编译期常量
+    constexpr int b = a * 2; 
+
+    // 非法：x是运行期变量（用户输入或运行时赋值），无法编译期确定
+    // int x = 5;
+    // constexpr int c = x; // 报错：x不是编译期常量
+
+    std::cout << b << std::endl; // 输出6（b的值在编译期已确定）
+    return 0;
+}
+```
+行为：
+
+    若函数的所有参数都是编译期常量，则函数在编译期计算（返回编译期常量）；
+    若函数的参数包含运行期变量，则函数在运行期计算（返回运行期值，仍合法）。
+
+```
+#include <iostream>
+
+// constexpr函数：计算n的平方
+constexpr int square(int n) {
+    return n * n; // 无运行期依赖，满足编译期计算条件
+}
+
+int main() {
+    // 场景1：参数是编译期常量（3）→ 函数在编译期计算
+    constexpr int a = square(3); // 编译期确定a=9
+    std::cout << a << std::endl; // 输出9
+
+    // 场景2：参数是运行期变量（x）→ 函数在运行期计算（仍合法）
+    int x = 5; // x是运行期变量（可由用户输入动态改变）
+    int b = square(x); // 运行期计算：5*5=25
+    std::cout << b << std::endl; // 输出25
+
+    return 0;
+}
+```
+
 
 # 模板
 立即调用的模板 lambda 表达式（IIFE，Immediately Invoked Function Expression）
+requires检测也就是SFINAE技术是在模板参数替换阶段(编译器尝试具体化模板时),进行语法层面的合法性检查,而不是运行或完整编译代码.
+requires 和 declval<T>:编译时检查与"伪实例化",均不会生成实际运行时代码.

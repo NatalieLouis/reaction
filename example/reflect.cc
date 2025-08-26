@@ -1,4 +1,5 @@
 
+#include <cstddef>
 #include <iostream>
 #include <string>
 #include <tuple>
@@ -16,6 +17,7 @@ struct Person {
   Field<std::string> m_name;
   Field<int> m_age;
   bool m_male;
+  Dog m_dog;
 };
 
 class PersonPrivate {
@@ -54,6 +56,23 @@ inline constexpr std::string_view getFunName() {
   return func_name.substr(pos1 + 6, pos2 - (pos1 + 6));  // 提取val的值
 }
 
+struct AnyType {
+  template <typename T>
+  operator T();  // 转换为任意类型
+};
+
+template <typename T>
+consteval size_t countMember(auto&&... Args) {
+  if constexpr (!requires { T{Args...}; }) {
+    return sizeof...(Args) - 1;
+  } else {
+    return countMember<T>(Args..., AnyType{});
+  }
+}
+
+template <typename T>
+constexpr size_t member_count_v = countMember<T>();
+
 template <typename T>
 struct Is_Field : std::false_type {};
 
@@ -68,14 +87,53 @@ constexpr bool check_field(const Tuple& tp) {
       tp);
   return found;
 }
+// template <typename T>
+// constexpr auto getTuple() {
+//   auto&& [m1, m2, m3] = get_global_object<T>();
+//   return std::tie(m1, m2, m3);
+// }
+
+// template <typename T>
+// constexpr bool reflectField() {
+//   constexpr auto ref_tup = getTuple<T>();
+//   return check_field(ref_tup);
+// }
+
+template <typename T, std::size_t n>
+struct ReflectHelper {};
+#define REF_STRUCT(n, ...)                           \
+  template <typename T>                              \
+  struct ReflectHelper<T, n> {                       \
+    static constexpr auto getTuple() {               \
+      auto&& [__VA_ARGS__] = get_global_object<T>(); \
+      return std::tie(__VA_ARGS__);                  \
+    }                                                \
+    static constexpr auto reflectFieldImpl() {       \
+      constexpr auto ref_tup = getTuple();           \
+      return check_field(ref_tup);                   \
+    }                                                \
+  };
+
+REF_STRUCT(1, m1)
+REF_STRUCT(2, m1, m2)
+REF_STRUCT(3, m1, m2, m3)
+REF_STRUCT(4, m1, m2, m3, m4)
+REF_STRUCT(5, m1, m2, m3, m4, m5)
+REF_STRUCT(6, m1, m2, m3, m4, m5, m6)
+REF_STRUCT(7, m1, m2, m3, m4, m5, m6, m7)
+
+template <typename T>
+constexpr auto reflectField(auto&&... Args) {
+  return ReflectHelper<T, member_count_v<T>>::reflectFieldImpl();
+}
 
 int main() {
   // int a = 10; 运行期的值不能作为非类型模板参数
   auto name = getFunName<&global_a>();  // 非类型参数必须是编译器确定的
   std::cout << name << std::endl;
 
-  auto&& [m1, m2, m3] = get_global_object<Person>();  // 结构化绑定+转发引用
-  constexpr auto tp = std::tie(m1, m2, m3);
+  auto&& [m1, m2, m3, m4] = get_global_object<Person>();  // 结构化绑定+转发引用
+  constexpr auto tp = std::tie(m1, m2, m3, m4);
   [&]<size_t... Is>(std::index_sequence<Is...>) {
     (std::cout << ... << getFunName<&std::get<Is>(tp)>());
     std::cout << std::endl;
@@ -89,4 +147,10 @@ int main() {
   */
 
   static_assert(check_field(tp), "No Field member found");  // 编译期断言
+  static_assert(reflectField<Person>, "Field member found");
+  constexpr auto tp2 = ReflectHelper<Person, member_count_v<Person>>::getTuple();
+  [&]<size_t... Is>(std::index_sequence<Is...>) {
+    (std::cout << ... << getFunName<&std::get<Is>(tp2)>());
+    std::cout << std::endl;
+  }(std::make_index_sequence<std::tuple_size_v<decltype(tp2)>>{});
 }
