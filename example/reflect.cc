@@ -9,18 +9,24 @@ int global_a = 10;
 template <typename T>
 struct Field {};
 
-template <auto... field>
+// 模板结构体，包含一个静态成员 value,有默认构造
+template <class T>
+struct my_wrapper {
+  inline static T value;
+};
+
+template <typename T, auto... field>
 struct private_visitor {
-  friend constexpr auto get_private_ptrs() {
+  friend constexpr auto get_private_ptrs(const my_wrapper<T>&) {
     constexpr auto tp = std::make_tuple(field...);
     return tp;
   }
 };
 
-// 声明友元函数并实例化模板
-#define REFL_PRIVATE(...)                   \
-  inline constexpr auto get_private_ptrs(); \
-  template struct private_visitor<__VA_ARGS__>;
+// 声明友元函数并实例化模板,##会在__VA_ARGS__为空时去掉前面的逗号
+#define REFL_PRIVATE(CLASS, ...)                                    \
+  inline constexpr auto get_private_ptrs(const my_wrapper<CLASS>&); \
+  template struct private_visitor<CLASS, ##__VA_ARGS__>;
 
 struct Dog {
   bool m_male;
@@ -39,17 +45,11 @@ class PersonPrivate {
   bool m_PrivateMale;
 };
 
-REFL_PRIVATE(&PersonPrivate::m_PrivateName, &PersonPrivate::m_PrivateAge,
+REFL_PRIVATE(PersonPrivate, &PersonPrivate::m_PrivateName, &PersonPrivate::m_PrivateAge,
              &PersonPrivate::m_PrivateMale)
 // REFL_PRIVATE(&PersonPrivate2::m_PrivateName, &PersonPrivate2::m_PrivateAge,
 //  &PersonPrivate2::m_PrivateMale) 会造成友元函数重定义,friend
 //  函数写在结构体里，如果没有限定作用域，依然是全局函数
-
-// 模板结构体，包含一个静态成员 value
-template <class T>
-struct my_wrapper {
-  inline static T value;
-};
 
 // 函数模板，用于获取 my_wrapper<T> 中定义的全局 value
 template <class T>
@@ -179,7 +179,7 @@ int main() {
 
   std::cout << "===========================================" << std::endl;
 
-  constexpr auto private_tp = get_private_ptrs();
+  constexpr auto private_tp = get_private_ptrs(my_wrapper<PersonPrivate>{});
   [&]<size_t... Is>(std::index_sequence<Is...>) {
     (std::cout << ... << getFunName<std::get<Is>(private_tp)>());
     std::cout << std::endl;
