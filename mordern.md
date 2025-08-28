@@ -371,3 +371,6 @@ int main() {
 立即调用的模板 lambda 表达式（IIFE，Immediately Invoked Function Expression）
 requires检测也就是SFINAE技术是在模板参数替换阶段(编译器尝试具体化模板时),进行语法层面的合法性检查,而不是运行或完整编译代码.
 requires 和 declval<T>:编译时检查与"伪实例化",均不会生成实际运行时代码.
+
+## ODR原则
+friend 函数写在结构体里，如果没有限定作用域，依然是全局函数。宏里再声明一次同名函数就会重定义。

@@ -9,6 +9,19 @@ int global_a = 10;
 template <typename T>
 struct Field {};
 
+template <auto... field>
+struct private_visitor {
+  friend constexpr auto get_private_ptrs() {
+    constexpr auto tp = std::make_tuple(field...);
+    return tp;
+  }
+};
+
+// 声明友元函数并实例化模板
+#define REFL_PRIVATE(...)                   \
+  inline constexpr auto get_private_ptrs(); \
+  template struct private_visitor<__VA_ARGS__>;
+
 struct Dog {
   bool m_male;
 };
@@ -21,16 +34,24 @@ struct Person {
 };
 
 class PersonPrivate {
-  Field<std::string> m_name;
-  Field<int> m_age;
-  bool m_male;
+  Field<std::string> m_PrivateName;
+  Field<int> m_PrivateAge;
+  bool m_PrivateMale;
 };
 
+REFL_PRIVATE(&PersonPrivate::m_PrivateName, &PersonPrivate::m_PrivateAge,
+             &PersonPrivate::m_PrivateMale)
+// REFL_PRIVATE(&PersonPrivate2::m_PrivateName, &PersonPrivate2::m_PrivateAge,
+//  &PersonPrivate2::m_PrivateMale) 会造成友元函数重定义,friend
+//  函数写在结构体里，如果没有限定作用域，依然是全局函数
+
+// 模板结构体，包含一个静态成员 value
 template <class T>
 struct my_wrapper {
   inline static T value;
 };
 
+// 函数模板，用于获取 my_wrapper<T> 中定义的全局 value
 template <class T>
 inline constexpr T& get_global_object() noexcept {
   return my_wrapper<T>::value;
@@ -101,6 +122,7 @@ constexpr bool check_field(const Tuple& tp) {
 
 template <typename T, std::size_t n>
 struct ReflectHelper {};
+
 #define REF_STRUCT(n, ...)                           \
   template <typename T>                              \
   struct ReflectHelper<T, n> {                       \
@@ -134,6 +156,7 @@ int main() {
 
   auto&& [m1, m2, m3, m4] = get_global_object<Person>();  // 结构化绑定+转发引用
   constexpr auto tp = std::tie(m1, m2, m3, m4);
+
   [&]<size_t... Is>(std::index_sequence<Is...>) {
     (std::cout << ... << getFunName<&std::get<Is>(tp)>());
     std::cout << std::endl;
@@ -147,10 +170,18 @@ int main() {
   */
 
   static_assert(check_field(tp), "No Field member found");  // 编译期断言
-  static_assert(reflectField<Person>, "Field member found");
+  static_assert(reflectField<Person>(), "Field member found");
   constexpr auto tp2 = ReflectHelper<Person, member_count_v<Person>>::getTuple();
   [&]<size_t... Is>(std::index_sequence<Is...>) {
     (std::cout << ... << getFunName<&std::get<Is>(tp2)>());
     std::cout << std::endl;
   }(std::make_index_sequence<std::tuple_size_v<decltype(tp2)>>{});
+
+  std::cout << "===========================================" << std::endl;
+
+  constexpr auto private_tp = get_private_ptrs();
+  [&]<size_t... Is>(std::index_sequence<Is...>) {
+    (std::cout << ... << getFunName<std::get<Is>(private_tp)>());
+    std::cout << std::endl;
+  }(std::make_index_sequence<std::tuple_size_v<decltype(private_tp)>>{});
 }
