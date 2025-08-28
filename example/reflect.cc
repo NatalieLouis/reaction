@@ -44,12 +44,27 @@ class PersonPrivate {
   Field<int> m_PrivateAge;
   bool m_PrivateMale;
 };
-
+// tuple 存储的是成员指针 PersonPrivate::Field<int>* -->Filed<int> 利用类型萃取
 REFL_PRIVATE(PersonPrivate, &PersonPrivate::m_PrivateName, &PersonPrivate::m_PrivateAge,
              &PersonPrivate::m_PrivateMale)
 // REFL_PRIVATE(&PersonPrivate2::m_PrivateName, &PersonPrivate2::m_PrivateAge,
 //  &PersonPrivate2::m_PrivateMale) 会造成友元函数重定义,friend
 //  函数写在结构体里，如果没有限定作用域，依然是全局函数
+
+template <auto MemberPtr>
+struct MemberPointerTraits {};
+
+template <typename T, typename C, T C::*MemberPtr>
+struct MemberPointerTraits<MemberPtr> {
+  using class_type = C;
+  using member_type = T;
+};
+
+template <auto MemberPtr>
+using member_type_t = typename MemberPointerTraits<MemberPtr>::member_type;
+
+template <typename T>
+concept IsAggregate = std::is_aggregate_v<T>;
 
 // 函数模板，用于获取 my_wrapper<T> 中定义的全局 value
 template <class T>
@@ -149,6 +164,28 @@ constexpr auto reflectField(auto&&... Args) {
   return ReflectHelper<T, member_count_v<T>>::reflectFieldImpl();
 }
 
+template <typename T>
+struct ReflectField {
+  static constexpr auto reflect() {
+    constexpr auto ref_tup = get_private_ptrs(my_wrapper<T>{});
+    bool found = false;
+    [&]<std::size_t... Is>(std::index_sequence<Is...>) {
+      ((found = found || Is_Field<member_type_t<std::get<Is>(ref_tup)>>{}), ...);
+    }(std::make_index_sequence<std::tuple_size_v<decltype(ref_tup)>>{});
+    return found;
+  }
+};
+
+template <IsAggregate T>
+struct ReflectField<T> {
+  static constexpr auto reflect() {
+    return ReflectHelper<T, member_count_v<T>>::reflectFieldImpl();
+  }
+};
+
+template <typename T>
+constexpr bool reflectField_v = ReflectField<T>::reflect();  // 是否包含filed成员
+
 int main() {
   // int a = 10; 运行期的值不能作为非类型模板参数
   auto name = getFunName<&global_a>();  // 非类型参数必须是编译器确定的
@@ -184,4 +221,6 @@ int main() {
     (std::cout << ... << getFunName<std::get<Is>(private_tp)>());
     std::cout << std::endl;
   }(std::make_index_sequence<std::tuple_size_v<decltype(private_tp)>>{});
+
+  static_assert(reflectField_v<PersonPrivate>, "Field member found");
 }
