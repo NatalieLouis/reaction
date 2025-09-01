@@ -1,8 +1,10 @@
+#include <concepts>
 #include <functional>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 
+#include "reaction/observerNode.h"
 #include "resource.h"
 
 namespace reaction {
@@ -16,15 +18,28 @@ namespace reaction {
     using ValueType = ExpressionType<Fun, Args...>;
 
     template <typename F, typename... A>
-    Expression(F&& fun, A&&... args)
-        : Resource<ExpressionType<Fun, Args...>>()
-        , m_fun(std::forward<F>(fun))
-        , m_args(std::forward<A>(args)...) {
-      this->updateObservers(std::forward<A>(args)...);  // auto c = alc(functor, a, b); c订阅a,b
-      evaluate();                                       // 计算当前值
+    void setSource(F&& fun, A&&... args) {
+      if constexpr (std::convertible_to<ExpressionType<std::decay_t<F>, std::decay_t<A>...>,
+                                        ValueType>) {
+        this->updateObservers(std::forward<A>(args)...);
+        setFunctor(createFun(std::forward<F>(fun), std::forward<A>(args)...));
+        evaluate();
+      }
     }
 
    private:
+    template <typename F, typename... A>
+    auto createFun(F&& fun, A&&... args) {
+      return [fun = std::forward<F>(fun), ... args = args.getSharedPtr()]() {
+        if constexpr (VoidType<ValueType>) {
+          std::invoke(fun, args->get()...);
+          return VoidWrapper{};
+        } else {
+          return std::invoke(fun, args->get()...);
+        }
+      };
+    }
+
     void valueChanged() override {
       evaluate();
       this->notify();  // 通知观察者更新
@@ -32,24 +47,16 @@ namespace reaction {
     // 实现观察者的更新策略
     void evaluate() {
       if constexpr (VoidType<ValueType>) {
-        // action 没有返回值
-        [&]<std::size_t... I>(std::index_sequence<I...>) {
-          return std::invoke(m_fun, std::get<I>(m_args).get().get()...);
-        }(std::make_index_sequence<std::tuple_size_v<decltype(m_args)>>{});
+        std::invoke(m_fun);  // 参数均在捕获列表里
       } else {
-        // lambda函数直接调用
-        auto result =
-            [&]<std::size_t... I>(std::index_sequence<I...>) {
-              return std::invoke(m_fun, std::get<I>(m_args).get().get()...);  // get()*2???
-            }(std::make_index_sequence<std::tuple_size_v<
-                  decltype(m_args)>>{});  //{}构造一个临时对象,因为需要std::index_sequence类型
-        this->updateValue(result);
+        this->updateValue(std::invoke(m_fun));
       }
     }
 
+    void setFunctor(const std::function<ValueType()>& fun) { m_fun = fun; }
+
    private:
-    Fun m_fun;
-    std::tuple<std::reference_wrapper<Args>...> m_args;
+    std::function<ValueType()> m_fun;  // 用于reset
   };
 
   template <typename Type>

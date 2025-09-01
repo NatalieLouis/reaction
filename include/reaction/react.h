@@ -18,6 +18,11 @@ namespace reaction {
     decltype(auto) get() const { return this->getValue(); }
     auto getRaw() const { return this->getRawPtr(); }
 
+    template <typename F, typename... A>
+    void set(F&& fun, A&&... args) {
+      this->setSource(std::forward<F>(fun), std::forward<A>(args)...);
+    }
+
     template <typename T>
       requires(ConvertCC<T, ValueType> && VarExprCC<VarExpressionTag> && !ConstType<ValueType>)
     void value(T&& t) {
@@ -90,6 +95,11 @@ namespace reaction {
     {
       return getSharedPtr()->get();  // Impl的get 获取resource的值,需要是有值的才能有get
     }
+
+    template <typename F, typename... A>
+    void reset(F&& t, A&&... args) {
+      return getSharedPtr()->set(std::forward<F>(t), std::forward<A>(args)...);
+    }
     // 更新值
     template <typename T>
     void value(T&& t) {
@@ -124,9 +134,9 @@ namespace reaction {
 
   template <typename Func, typename... Args>
   auto calc(Func&& fun, Args&&... args) {
-    auto ptr = std::make_shared<ReactImpl<std::decay_t<Func>, std::decay_t<Args>...>>(
-        std::forward<Func>(fun), std::forward<Args>(args)...);
+    auto ptr = std::make_shared<ReactImpl<std::decay_t<Func>, std::decay_t<Args>...>>();
     ObserverGraph::instance().addNode(ptr);
+    ptr->set(std::forward<Func>(fun), std::forward<Args>(args)...);
     return React(ptr);
   }
 

@@ -307,3 +307,9 @@ int main() {
 ## void类型不能做函数的参数,但是包装类可以
 
 ## maybeunused
+
+## function 类型擦除
+形参包放在lambda的捕获列表中==形参包放在了匿名lambda的成员变量中
+实现维护实时存储一个动态的形参包
+
+## string的移动构造,本身的reset为空

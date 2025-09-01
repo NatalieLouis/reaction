@@ -47,17 +47,8 @@ TEST(ReactionTest, TestConst) {
   ASSERT_FLOAT_EQ(ds.get(), 5.14);
   // b.value(4.14);  // compile error;
 }
+
 TEST(ReactionTest, TestAction) {
-  auto a = reaction::var(1);
-  auto b = reaction::var(3.14);
-  auto at = reaction::action(
-      [](int aa, double bb) { std::cout << "a = " << aa << '\t' << "b = " << bb << '\t'; }, a,
-      b);  // void类型
-
-  a.value(2);
-}
-
-TEST(ReactionTest, TestAction2) {
   auto a = reaction::var(1);
   auto b = reaction::var(3.14);
   auto at = reaction::action(
@@ -75,6 +66,16 @@ TEST(ReactionTest, TestAction2) {
 
   a.value(2);
   EXPECT_TRUE(trigger);
+}
+
+TEST(ReactionTest, TestReset) {
+  auto a = reaction::var(1);
+  auto b = reaction::var(2);
+  auto ds = reaction::calc([](auto aa, auto bb) { return aa + bb; }, a, b);
+  auto dds = reaction::calc([](auto aa, auto bb) { return aa + bb; }, a, b);
+  dds.reset([](auto aa, auto bb) { return aa * bb; }, a, ds);
+  a.value(2);
+  EXPECT_EQ(dds.get(), 8);
 }
 
 int main(int argc, char** argv) {

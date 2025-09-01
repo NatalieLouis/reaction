@@ -35,8 +35,9 @@ namespace reaction {
     void updateValue(T&& t) {
       if (!m_ptr) {
         m_ptr = std::make_unique<Type>(std::forward<T>(t));
+      } else {
+        *m_ptr = std::forward<T>(t);  // 否则移动构造会reset
       }
-      *m_ptr = std::forward<T>(t);
     }
 
    private:
