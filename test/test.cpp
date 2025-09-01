@@ -57,6 +57,26 @@ TEST(ReactionTest, TestAction) {
   a.value(2);
 }
 
+TEST(ReactionTest, TestAction2) {
+  auto a = reaction::var(1);
+  auto b = reaction::var(3.14);
+  auto at = reaction::action(
+      [](int aa, double bb) { std::cout << "a = " << aa << '\t' << "b = " << bb << '\t'; }, a, b);
+
+  bool trigger = false;
+  auto att = reaction::action(
+      [&]([[maybe_unused]] auto atat) {
+        trigger = true;
+        std::cout << "at trigger " << std::endl;
+      },
+      at);
+
+  trigger = false;
+
+  a.value(2);
+  EXPECT_TRUE(trigger);
+}
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

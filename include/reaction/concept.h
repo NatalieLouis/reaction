@@ -13,6 +13,9 @@ namespace reaction {
 
   struct VarExpressionTag;
   class ObserverNode;
+  struct VoidWrapper;
+  class FieldBase;
+
   using NodePtr = std::shared_ptr<ObserverNode>;
 
   //==================================concepts=========================================
@@ -26,7 +29,7 @@ namespace reaction {
   concept ConstType = std::is_const_v<std::remove_reference_t<T>>;
 
   template <typename T>
-  concept VoidType = std::is_void_v<T>;
+  concept VoidType = std::is_void_v<T> || std::is_same_v<std::decay_t<T>, VoidWrapper>;
 
   template <typename T>
   concept IsReactNode = requires(T t) {
@@ -42,21 +45,22 @@ namespace reaction {
   //=====================expression traits=================================
   template <typename T>
   struct ExpressionTraits {
-    using Type = T;
+    using type = T;
   };
 
   template <typename T>
   struct ExpressionTraits<React<ReactImpl<T>>> {
-    using Type = T;
+    using type = T;
   };
 
   template <typename Fun, typename... Args>
   struct ExpressionTraits<React<ReactImpl<Fun, Args...>>> {
-    using Type = std::invoke_result_t<Fun, typename ExpressionTraits<Args>::Type...>;
+    using rawtype = std::invoke_result_t<Fun, typename ExpressionTraits<Args>::type...>;
+    using type = std::conditional_t<VoidType<rawtype>, VoidWrapper, rawtype>;
   };
 
   template <typename Fun, typename... Args>
   using ExpressionType =
-      typename ExpressionTraits<React<ReactImpl<Fun, Args...>>>::Type;  // 避免typename来避免歧义
+      typename ExpressionTraits<React<ReactImpl<Fun, Args...>>>::type;  // 避免typename来避免歧义
 
 }  // namespace reaction

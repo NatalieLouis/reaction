@@ -24,6 +24,13 @@ namespace reaction {
       return *m_ptr;
     }
 
+    Type* getRawPtr() const {
+      if (!m_ptr) {
+        throw std::runtime_error("Resource is not initialized");
+      }
+      return m_ptr.get();
+    }
+
     template <typename T>
     void updateValue(T&& t) {
       if (!m_ptr) {
@@ -36,10 +43,12 @@ namespace reaction {
     std::unique_ptr<Type> m_ptr;
   };
 
+  struct VoidWrapper {};
   template <>
-  class Resource<void> : public ObserverNode {
+  class Resource<VoidWrapper> : public ObserverNode {
    public:
     // void 是无需创建unique_ptr
+    auto getValue() const { return VoidWrapper{}; }
   };
 
 }  // namespace reaction

@@ -15,7 +15,8 @@ namespace reaction {
     using ExprType = typename Expression<Type, Args...>::ExprType;
     using ValueType = typename Expression<Type, Args...>::ValueType;
 
-    auto get() const { return this->getValue(); }
+    decltype(auto) get() const { return this->getValue(); }
+    auto getRaw() const { return this->getRawPtr(); }
 
     template <typename T>
       requires(ConvertCC<T, ValueType> && VarExprCC<VarExpressionTag> && !ConstType<ValueType>)
@@ -80,11 +81,12 @@ namespace reaction {
       }
       return *this;
     }
+    auto operator->() const { return getSharedPtr()->getRaw(); }
 
     explicit operator bool() const { return !m_weakPtr.expired(); }
 
-    auto get() const
-      requires IsDataReact<ReactType>
+    decltype(auto) get() const
+    // requires IsDataReact<ReactType>
     {
       return getSharedPtr()->get();  // Impl的get 获取resource的值,需要是有值的才能有get
     }
