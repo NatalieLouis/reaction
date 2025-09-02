@@ -1,4 +1,5 @@
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <type_traits>
 #include <utility>
@@ -7,6 +8,13 @@
 #include "reaction/observerNode.h"
 
 namespace reaction {
+  inline thread_local std::function<void(NodePtr)> g_reg_fun;
+
+  struct RegGuard {
+    RegGuard(const std::function<void(NodePtr)>& reg_fun) { g_reg_fun = reg_fun; }
+    ~RegGuard() { g_reg_fun = nullptr; }
+  };
+
   template <typename Type, typename... Args>
   class ReactImpl : public Expression<Type, Args...> {
    public:
@@ -18,9 +26,15 @@ namespace reaction {
     decltype(auto) get() const { return this->getValue(); }
     auto getRaw() const { return this->getRawPtr(); }
 
-    template <typename F, typename... A>
+    template <typename F, HasArgs... A>
     void set(F&& fun, A&&... args) {
       this->setSource(std::forward<F>(fun), std::forward<A>(args)...);
+    }
+    template <typename F>
+    void set(F&& fun) {
+      // 数据源正在创建时,就进行赋值
+      RegGuard guard([this](NodePtr node) { this->addObCb(node); });  // 避免有return无法nullptr
+      this->setSource(std::forward<F>(fun));
     }
 
     template <typename T>
@@ -89,6 +103,13 @@ namespace reaction {
     auto operator->() const { return getSharedPtr()->getRaw(); }
 
     explicit operator bool() const { return !m_weakPtr.expired(); }
+
+    decltype(auto) operator()() const {
+      if (g_reg_fun) {
+        std::invoke(g_reg_fun, this->getSharedPtr());
+      }
+      return get();
+    }
 
     decltype(auto) get() const
     // requires IsDataReact<ReactType>

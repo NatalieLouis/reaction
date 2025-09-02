@@ -21,11 +21,13 @@ namespace reaction {
     void setSource(F&& fun, A&&... args) {
       if constexpr (std::convertible_to<ExpressionType<std::decay_t<F>, std::decay_t<A>...>,
                                         ValueType>) {
-        this->updateObservers(std::forward<A>(args)...);
+        this->updateObservers(args.getSharedPtr()...);  // 订阅args的变化
         setFunctor(createFun(std::forward<F>(fun), std::forward<A>(args)...));
         evaluate();
       }
     }
+    // 给()使用
+    void addObCb(NodePtr node) { this->updateObservers(node); }
 
    private:
     template <typename F, typename... A>
@@ -59,7 +61,7 @@ namespace reaction {
     std::function<ValueType()> m_fun;  // 用于reset
   };
 
-  template <typename Type>
+  template <NonInvocableType Type>
   class Expression<Type> : public Resource<Type> {
    public:
     using ExprType = VarExpressionTag;

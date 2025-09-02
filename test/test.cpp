@@ -78,6 +78,23 @@ TEST(ReactionTest, TestReset) {
   EXPECT_EQ(dds.get(), 8);
 }
 
+TEST(ReactionTest, TestParentheses) {
+  auto a = reaction::var(1);
+  auto b = reaction::var(3.14);
+  EXPECT_EQ(a.get(), 1);
+  EXPECT_EQ(b.get(), 3.14);
+
+  auto ds = reaction::calc([&]() { return a() + b(); });
+  auto dds = reaction::calc([&]() { return std::to_string(a()) + std::to_string(ds()); });
+
+  ASSERT_FLOAT_EQ(ds.get(), 4.14);
+  EXPECT_EQ(dds.get(), "14.140000");
+
+  a.value(2);
+  ASSERT_FLOAT_EQ(ds.get(), 5.14);
+  EXPECT_EQ(dds.get(), "25.140000");
+}
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

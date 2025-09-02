@@ -32,6 +32,15 @@ namespace reaction {
   concept VoidType = std::is_void_v<T> || std::is_same_v<std::decay_t<T>, VoidWrapper>;
 
   template <typename T>
+  concept InvocableType = std::is_invocable_v<std::decay_t<T>>;
+
+  template <typename T>
+  concept NonInvocableType = !InvocableType<T>;
+
+  template <typename... Args>
+  concept HasArgs = sizeof...(Args) > 0;
+
+  template <typename T>
   concept IsReactNode = requires(T t) {
     { t.shared_from_this() } -> std::same_as<NodePtr>;
   };
@@ -48,7 +57,7 @@ namespace reaction {
     using type = T;
   };
 
-  template <typename T>
+  template <NonInvocableType T>
   struct ExpressionTraits<React<ReactImpl<T>>> {
     using type = T;
   };

@@ -17,7 +17,7 @@ namespace reaction {
     template <typename... Args>
     void updateObservers(Args&&... args) {
       (void) (...,
-              args.getSharedPtr()->addObserver(this));  // 弃值表达式&折叠表达式,React的getSharedPtr
+              args->addObserver(this));  // 弃值表达式&折叠表达式,React的getSharedPtr
     }
 
     void notify() {
