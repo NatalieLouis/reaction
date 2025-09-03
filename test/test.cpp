@@ -95,6 +95,18 @@ TEST(ReactionTest, TestParentheses) {
   EXPECT_EQ(dds.get(), "25.140000");
 }
 
+TEST(ReactionTest, TestExpr) {
+  auto a = reaction::var(1);
+  auto b = reaction::var(2);
+  auto c = reaction::var(3.14);
+  auto ds = reaction::calc([&]() { return a() + b(); });
+  auto expr_ds = reaction::expr(c + a / b - ds * 2);
+
+  a.value(2);
+  EXPECT_EQ(ds.get(), 4);
+  ASSERT_FLOAT_EQ(expr_ds.get(), -3.86);
+}
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

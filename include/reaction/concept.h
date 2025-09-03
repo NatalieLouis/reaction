@@ -11,6 +11,12 @@ namespace reaction {
   template <typename T>
   class React;
 
+  template <typename Op, typename L, typename R>
+  class BinaryOpExpr;
+
+  template <typename T>
+  struct ValueWrapper;
+
   struct VarExpressionTag;
   class ObserverNode;
   struct VoidWrapper;
@@ -52,6 +58,15 @@ namespace reaction {
   };
 
   //=====================expression traits=================================
+
+  template <typename T>
+  struct IsReact : std::false_type {};
+
+  template <typename T>
+  struct IsReact<React<T>> : std::true_type {
+    using type = T;
+  };
+
   template <typename T>
   struct ExpressionTraits {
     using type = T;
@@ -72,4 +87,20 @@ namespace reaction {
   using ExpressionType =
       typename ExpressionTraits<React<ReactImpl<Fun, Args...>>>::type;  // 避免typename来避免歧义
 
+  template <typename T>
+  struct BinaryOpExprTraits : std::false_type {};
+
+  template <typename Op, typename L, typename R>
+  struct BinaryOpExprTraits<BinaryOpExpr<Op, L, R>> : std::true_type {};
+
+  template <typename T>
+  concept IsBinaryOpExpr = BinaryOpExprTraits<std::decay_t<T>>::value;
+
+  template <typename T>
+  using ExprWrapper =
+      std::conditional_t<IsReact<T>::value || IsBinaryOpExpr<T>, T, ValueWrapper<T>>;
+
+  template <typename L, typename R>
+  concept HasCustomOp = IsReact<std::decay_t<L>>::value || IsReact<std::decay_t<R>>::value ||
+                        IsBinaryOpExpr<std::decay_t<L>> || IsBinaryOpExpr<std::decay_t<R>>;
 }  // namespace reaction

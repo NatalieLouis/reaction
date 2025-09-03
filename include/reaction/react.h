@@ -30,11 +30,17 @@ namespace reaction {
     void set(F&& fun, A&&... args) {
       this->setSource(std::forward<F>(fun), std::forward<A>(args)...);
     }
+
     template <typename F>
     void set(F&& fun) {
       // 数据源正在创建时,就进行赋值
       RegGuard guard([this](NodePtr node) { this->addObCb(node); });  // 避免有return无法nullptr
       this->setSource(std::forward<F>(fun));
+    }
+
+    void set() {
+      RegGuard guard([this](NodePtr node) { this->addObCb(node); });  // 避免有return无法nullptr
+      this->setOpExpr();
     }
 
     template <typename T>
@@ -59,6 +65,8 @@ namespace reaction {
   template <typename ReactType>
   class React {
    public:
+    using ValueType = typename ReactType::ValueType;
+
     // ReactImpl<std::decay_t<T>> == ReactType
     explicit React(std::shared_ptr<ReactType> ptr) : m_weakPtr(std::move(ptr)) {
       if (auto sharedPtr = m_weakPtr.lock()) {
@@ -158,6 +166,14 @@ namespace reaction {
     auto ptr = std::make_shared<ReactImpl<std::decay_t<Func>, std::decay_t<Args>...>>();
     ObserverGraph::instance().addNode(ptr);
     ptr->set(std::forward<Func>(fun), std::forward<Args>(args)...);
+    return React(ptr);
+  }
+
+  template <typename OpExpr>
+  auto expr(OpExpr&& opExpr) {
+    auto ptr = std::make_shared<ReactImpl<std::decay_t<OpExpr>>>(std::forward<OpExpr>(opExpr));
+    ObserverGraph::instance().addNode(ptr);
+    ptr->set();
     return React(ptr);
   }
 
